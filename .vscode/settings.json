@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.tcc": "cpp",
+        "fstream": "cpp",
+        "array": "cpp",
+        "initializer_list": "cpp"
+    }
+}
