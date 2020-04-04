@@ -1,49 +1,44 @@
 #include <Arduino.h>
 #include <EasyINI.h>
 
-// ; i # na pocetku reda oznacavaju komentare
-// [x] je Naslov foldera/kategorije
-// pocetne i zavrsne beline ne uzimam tj. trimujem i naziv i vrednost - mozda ovo da bude opcija?
-// citam fajl od mesta na kojem sam do kraja, pa od kraja do mesta na kojem sam poceo pretragu imena
 // testirati: ima li problema ako se u istom skecu vise puta pozove SPIFFS.begin()
 // sta ako pozovem close, a nisam ni otvorio fajl
 // pronaci neki nacin za davanje informacije o mogucim greskama
+// mozda staviti u destruktor Close? (ako je fajl prethodno otvoren)
+
+EasyINI ei("/testx.ini");
 
 void setup()
 {
     Serial.begin(115200);
-    Serial.println();
+    Serial.println("\n");
 
-    //* EI ei("test.ini", R/W);
-    EasyINI ei("/test2.ini");
-    if (ei.Opened())
+    ulong ms = millis();
+    ei.Open(EasyIniFileMode::Read);
+    //if (ei.Open(EasyIniFileMode::Read))
     {
-        // Serial.println(ei.Size());
-        // int x = ei.GetInt("one");
-        int x = ei.GetInt("one");
-        Serial.println(x);
-        // float f = ei.ReadFloat("two");
-        Serial.println(ei.GetFloat("two"));
-        // bool b = ei.GetBool("three");
-        bool b = ei.GetInt("three");
-        Serial.println(b);
-        // char *s = ei.GetCharArray("four_five");
-        String s = ei.GetString("s");
-        Serial.println(s);
-        s = ei.GetString("str");
-        Serial.println(s);
-        s = ei.GetString("fsfsf");
-        Serial.println(s);
-        s = ei.GetString("four_five");
-        Serial.println(s);
+        Serial.println(ei.GetFloat("two", 5.99));
+        Serial.println(ei.GetInt("three", 3));
+        Serial.println(ei.GetInt("one", 1));
+        Serial.println(ei.GetAll());
+        Serial.println(ei.GetString("str", "bleja"));
+        ei.Close();
     }
-    ei.Close();
+    Serial.println(millis() - ms);
+    delay(2000);
+
+    if (ei.Open(EasyIniFileMode::Write))
+    {
+        ei.SetFloat("two", 10.55);
+        ei.SetInt("three", 125);
+        ei.SetInt("ones", 100);
+        ei.SetString("str", "Azuki");
+        ei.Close();
+    }    
+    Serial.println("End.");
 
     while (true)
         delay(100);
-
-    // ...
-    // ei.WriteInt("one", 321);
 }
 
 void loop()
