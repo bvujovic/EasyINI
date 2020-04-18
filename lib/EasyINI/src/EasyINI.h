@@ -29,7 +29,7 @@ private:
     // Reads a line from file, if line starts with <name>= method returns substring after '='
     String ProcLineString(const char *);
     // Reads a line from file, if line starts with <name>= method returns pointer to char after '='
-    char *ProcLineNum(const char *, char *, size_t);
+    char *ProcLine(const char *, char *, size_t);
 
 public:
     // Constructor. Example: EasyINI ei("/config.ini");
@@ -48,8 +48,10 @@ public:
     int GetInt(const char *, int = EINI_DEF_NUM);
     // Read float value.
     float GetFloat(const char *, float = EINI_DEF_NUM);
-    // Read string value.
+    // Read text (String class) value.
     String GetString(const char *, String = EINI_DEF_STR);
+    // Read text (char *) value.
+    char *GetCharArray(const char *name);
     // Returns complete contents of the file.
     String GetAll();
 

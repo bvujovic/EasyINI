@@ -14,11 +14,22 @@ bool EasyINI::Open(EasyIniFileMode mode)
     return fp;
 }
 
-char *EasyINI::ProcLineNum(const char *name, char *buf, size_t n)
+char *EasyINI::ProcLine(const char *name, char *buf, size_t n)
 {
-    fp.readBytesUntil(EINI_ROW_SEP, buf, EINI_BUF_LEN);
-    if (strncmp(name, buf, n) == 0 && buf[n] == EINI_VAL_SEP)
-        return buf + n + 1;
+    size_t nBuf = fp.readBytesUntil(EINI_ROW_SEP, buf, EINI_BUF_LEN);
+    if (strncmp(name, buf, n) == 0) // red pocinje trazenim nazivom (name)
+    {
+        uint i = n;
+        while (isWhitespace(buf[i])) // ukidaju se sve beline do znaka '='
+            i++;
+        if (buf[i++] == EINI_VAL_SEP)
+        {
+            while (isWhitespace(buf[i])) // ukidaju se beline posle znaka '='
+                i++;
+            buf[nBuf] = '\0';
+            return buf + i;
+        }
+    }
     return NULL;
 }
 
@@ -30,12 +41,11 @@ int EasyINI::GetInt(const char *name, int def)
     char *p;
 
     while (fp.available())
-        if ((p = ProcLineNum(name, buf, n)))
+        if ((p = ProcLine(name, buf, n)))
             return atoi(p);
     fp.seek(0);
-
     while (fp.position() < initPos)
-        if ((p = ProcLineNum(name, buf, n)) != NULL)
+        if ((p = ProcLine(name, buf, n)) != NULL)
             return atoi(p);
 
     return def;
@@ -49,12 +59,11 @@ float EasyINI::GetFloat(const char *name, float def)
     char *p;
 
     while (fp.available())
-        if ((p = ProcLineNum(name, buf, n)))
+        if ((p = ProcLine(name, buf, n)))
             return atof(p);
     fp.seek(0);
-
     while (fp.position() < initPos)
-        if ((p = ProcLineNum(name, buf, n)) != NULL)
+        if ((p = ProcLine(name, buf, n)) != NULL)
             return atof(p);
 
     return def;
@@ -66,8 +75,15 @@ String EasyINI::ProcLineString(const char *name)
     if (line.startsWith(name))
     {
         size_t n = strlen(name);
-        if (line[n] == EINI_VAL_SEP)
-            return line.substring(n + 1);
+        uint i = n;
+        while (isWhitespace(line[i])) // ukidaju se beline do znaka '='
+            i++;
+        if (line[i++] == EINI_VAL_SEP)
+        {
+            while (isWhitespace(line[i])) // ukidaju se beline posle znaka '='
+                i++;
+            return line.substring(i);
+        }
     }
     return EINI_DEF_STR;
 }
@@ -80,36 +96,30 @@ String EasyINI::GetString(const char *name, String def)
         if (!(s = ProcLineString(name)).isEmpty())
             return s;
     fp.seek(0);
-
     while (fp.position() < initPos)
         if (!(s = ProcLineString(name)).isEmpty())
             return s;
     return def;
 }
 
-//* Bez for petlje (koja ne treba da utice na rezultat), metoda ne radi!
-// char *EasyINI::GetCharArray(const char *name)
-// {
-//     char buf[80];
-//     size_t nBuf = fp.readBytesUntil('\n', buf, 80);
-//     Serial.println(buf);
-//     Serial.println(nBuf);
-//     size_t n = strlen(name);
-//     Serial.println(n);
-//     if (strncmp(name, buf, n) == 0)
-//     {
-//         Serial.println("Ne vracam NULL");
-//         buf[nBuf - 1] = 0;
-//         for (char *p = buf + n + 1; p < buf + nBuf; p++)
-//             Serial.println((int)*p);
-//         return buf + n + 1;
-//     }
-//     else
-//     {
-//         Serial.println("Vracam NULL");
-//         return NULL;
-//     }
-// }
+char *EasyINI::GetCharArray(const char *name)
+{
+    size_t initPos = fp.position();
+    size_t n = strlen(name);
+    char *buf = (char *)malloc(EINI_BUF_LEN);
+    char *p;
+
+    while (fp.available())
+        if ((p = ProcLine(name, buf, n)))
+            return p;
+    fp.seek(0);
+    while (fp.position() < initPos)
+        if ((p = ProcLine(name, buf, n)))
+            return p;
+
+    free(buf);
+    return NULL;
+}
 
 String EasyINI::GetAll()
 {
